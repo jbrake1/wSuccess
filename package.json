@@ -1,0 +1,30 @@
+{
+  "name": "project-management-tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "kill-ports": "./kill-ports.sh",
+"prestart": "(lsof -ti :3000 | xargs kill -9 || true) && (lsof -ti :5000 | xargs kill -9 || true) && sleep 3 && (lsof -i :3000 && echo 'Port 3000 still in use' && exit 1 || true) && (lsof -i :5000 && echo 'Port 5000 still in use' && exit 1 || true)",
+    "start": "node server.js",
+    "server": "nodemon server.js",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"node --no-deprecation server.js\" \"npm start --prefix client\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.3",
+    "nodemailer": "^6.9.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.1",
+    "nodemon": "^2.0.22"
+  }
+}
