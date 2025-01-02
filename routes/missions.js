@@ -2,6 +2,7 @@ const express = require('express');
 const Mission = require('../models/Mission');
 const User = require('../models/User');
 const Collaborator = require('../models/Collaborator');
+const DriversNResources = require('../models/DriversNResources');
 const router = express.Router();
 const auth = require('../middleware/auth');
 
@@ -267,6 +268,94 @@ router.get('/:missionId/debug', auth, async (req, res) => {
       mission,
       currentUser: req.user
     });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Drivers and Resources endpoints
+router.route('/:missionId/drivers_n_resources')
+  // Get drivers and resources for mission
+  .get(auth, async (req, res) => {
+    try {
+      const driversResources = await DriversNResources.find({ 
+        mission_id: req.params.missionId 
+      })
+        .populate('created_by', 'name')
+        .sort({ created: -1 });
+
+      res.json(driversResources);
+    } catch (err) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  })
+  // Create new driver/resource entry
+  .post(auth, async (req, res) => {
+    try {
+      const { note } = req.body;
+
+      if (!note || !note.trim()) {
+        return res.status(400).json({ message: 'Note is required' });
+      }
+
+      const driverResource = new DriversNResources({
+        note: note.trim(),
+        mission_id: req.params.missionId,
+        created_by: req.user
+      });
+
+      await driverResource.save();
+      res.status(201).json(driverResource);
+    } catch (err) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+// Update driver/resource entry
+router.put('/drivers_n_resources/:id', auth, async (req, res) => {
+  try {
+    const { note } = req.body;
+
+    if (!note || !note.trim()) {
+      return res.status(400).json({ message: 'Note is required' });
+    }
+
+    const driverResource = await DriversNResources.findById(req.params.id);
+
+    if (!driverResource) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+
+    // Verify user is the creator
+    if (driverResource.created_by.toString() !== req.user.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    driverResource.note = note.trim();
+    await driverResource.save();
+
+    res.json(driverResource);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete driver/resource entry
+router.delete('/drivers_n_resources/:id', auth, async (req, res) => {
+  try {
+    const driverResource = await DriversNResources.findById(req.params.id);
+
+    if (!driverResource) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+
+    // Verify user is the creator
+    if (driverResource.created_by.toString() !== req.user.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    await driverResource.deleteOne();
+    res.status(204).end();
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

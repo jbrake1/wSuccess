@@ -100,6 +100,12 @@ const Missions = () => {
               >
                 View Successes
               </Link>
+              <Link 
+                to={`/missions/${mission._id}/drivers_n_resources`}
+                className="drivers-link px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+              >
+                View Drivers & Resources
+              </Link>
             </div>
           </div>
         ))}

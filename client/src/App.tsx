@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Missions from './pages/Missions';
 import MissionCollaborators from './pages/MissionCollaborators';
 import Successes from './pages/Successes';
+import DriversNResources from './pages/DriversNResources';
 import Users from './pages/Users';
 import EditUser from './pages/EditUser';
 import Navbar from './components/Navbar';
@@ -30,6 +31,7 @@ function App() {
               <Route path="/missions" element={<Missions />} />
               <Route path="/missions/:missionId/collaborators/:missionName" element={<MissionCollaborators />} />
               <Route path="/missions/:missionId/successes" element={<Successes />} />
+              <Route path="/missions/:missionId/drivers_n_resources" element={<DriversNResources />} />
               <Route path="/users" element={<Users />} />
               <Route path="/users/:userId/edit" element={<EditUser />} />
             </Route>
