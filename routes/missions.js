@@ -186,6 +186,79 @@ router.post('/:missionId/collaborators', auth, async (req, res) => {
   }
 });
 
+// Get mission details
+router.get('/:missionId', auth, async (req, res) => {
+  try {
+    const mission = await Mission.findById(req.params.missionId)
+      .populate('createdBy', 'name')
+      .populate('assignedTo', 'name');
+    
+    if (!mission) {
+      return res.status(404).json({ message: 'Mission not found' });
+    }
+
+    res.json(mission);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Success endpoints
+router.route('/:missionId/successes')
+  // Get successes for mission
+  .get(auth, async (req, res) => {
+    try {
+      const Success = require('../models/Success');
+      const successes = await Success.find({ mission_id: req.params.missionId })
+        .populate('created_by', 'name')
+        .sort({ created: -1 });
+
+      res.json(successes);
+    } catch (err) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  })
+  // Create new success
+  .post(auth, async (req, res) => {
+    try {
+      const Success = require('../models/Success');
+      const { note } = req.body;
+
+      const success = new Success({
+        note,
+        mission_id: req.params.missionId,
+        created_by: req.user
+      });
+
+      await success.save();
+      res.status(201).json(success);
+    } catch (err) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+// Delete success
+router.delete('/successes/:successId', auth, async (req, res) => {
+  try {
+    const Success = require('../models/Success');
+    const success = await Success.findById(req.params.successId);
+
+    if (!success) {
+      return res.status(404).json({ message: 'Success not found' });
+    }
+
+    // Verify user is the creator
+    if (success.created_by.toString() !== req.user.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    await success.deleteOne();
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Temporary debug route
 router.get('/:missionId/debug', auth, async (req, res) => {
   try {

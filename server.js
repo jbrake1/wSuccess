@@ -15,6 +15,9 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error(err));
 
+// Import models
+require('./models/Success');
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const missionRoutes = require('./routes/missions');

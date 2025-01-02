@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext.tsx';
+import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import api from '../services/api.ts';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 
 interface Mission {
@@ -87,12 +87,20 @@ const Missions = () => {
             <p>{mission.description}</p>
             <p>Status: {mission.status}</p>
             {mission.dueDate && <p>Due: {new Date(mission.dueDate).toLocaleDateString()}</p>}
-            <Link 
-              to={`/missions/${mission._id}/collaborators/${encodeURIComponent(mission.title)}`}
-              className="collaborators-link"
-            >
-              View Collaborators
-            </Link>
+            <div className="mission-links flex gap-4 mt-4">
+              <Link 
+                to={`/missions/${mission._id}/collaborators/${encodeURIComponent(mission.title)}`}
+                className="collaborators-link px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                View Collaborators
+              </Link>
+              <Link 
+                to={`/missions/${mission._id}/successes`}
+                className="successes-link px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+              >
+                View Successes
+              </Link>
+            </div>
           </div>
         ))}
       </div>

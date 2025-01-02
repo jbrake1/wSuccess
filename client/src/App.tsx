@@ -8,6 +8,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Missions from './pages/Missions';
 import MissionCollaborators from './pages/MissionCollaborators';
+import Successes from './pages/Successes';
+import Users from './pages/Users';
+import EditUser from './pages/EditUser';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
@@ -26,6 +29,9 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/missions" element={<Missions />} />
               <Route path="/missions/:missionId/collaborators/:missionName" element={<MissionCollaborators />} />
+              <Route path="/missions/:missionId/successes" element={<Successes />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/users/:userId/edit" element={<EditUser />} />
             </Route>
           </Routes>
         </div>
