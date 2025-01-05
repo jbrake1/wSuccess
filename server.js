@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -22,11 +23,21 @@ require('./models/Success');
 const authRoutes = require('./routes/auth');
 const missionRoutes = require('./routes/missions');
 const userRoutes = require('./routes/users');
+const successRoutes = require('./routes/successes');
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'client/build')));
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api', successRoutes);
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
