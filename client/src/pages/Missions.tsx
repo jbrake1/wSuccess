@@ -90,21 +90,27 @@ const Missions = () => {
             <div className="mission-links flex gap-4 mt-4">
               <Link 
                 to={`/missions/${mission._id}/collaborators/${encodeURIComponent(mission.title)}`}
-                className="collaborators-link px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                className="collaborators-link px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors mx-2"
               >
                 View Collaborators
               </Link>
               <Link 
                 to={`/missions/${mission._id}/successes`}
-                className="successes-link px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                className="successes-link px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors mx-2"
               >
                 View Successes
               </Link>
               <Link 
                 to={`/missions/${mission._id}/drivers_n_resources`}
-                className="drivers-link px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+                className="drivers-link px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors mx-2"
               >
                 View Drivers & Resources
+              </Link>
+              <Link 
+                to={`/missions/${mission._id}/constraints_n_obstacles`}
+                className="constraints-link px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors mx-2"
+              >
+                View Constraints & Obstacles
               </Link>
             </div>
           </div>

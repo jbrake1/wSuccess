@@ -24,6 +24,7 @@ const authRoutes = require('./routes/auth');
 const missionRoutes = require('./routes/missions');
 const userRoutes = require('./routes/users');
 const successRoutes = require('./routes/successes');
+const constraintsNObstaclesRoutes = require('./routes/constraints_n_obstacles');
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')));
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', successRoutes);
+app.use('/api/constraints_n_obstacles', constraintsNObstaclesRoutes);
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {

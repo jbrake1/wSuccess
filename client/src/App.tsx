@@ -11,6 +11,7 @@ import Missions from './pages/Missions';
 import MissionCollaborators from './pages/MissionCollaborators';
 import Successes from './pages/Successes';
 import DriversNResources from './pages/DriversNResources';
+import ConstraintsNObstaclesPage from './pages/ConstraintsNObstacles';
 import Users from './pages/Users';
 import EditUser from './pages/EditUser';
 import Navbar from './components/Navbar';
@@ -34,6 +35,7 @@ function App() {
               <Route path="/missions/:missionId/collaborators/:missionName" element={<MissionCollaborators />} />
               <Route path="/missions/:missionId/successes" element={<Successes />} />
               <Route path="/missions/:missionId/drivers_n_resources" element={<DriversNResources />} />
+              <Route path="/missions/:missionId/constraints_n_obstacles" element={<ConstraintsNObstaclesPage />} />
               <Route path="/users" element={<Users />} />
               <Route path="/users/:userId/edit" element={<EditUser />} />
             </Route>

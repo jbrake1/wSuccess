@@ -28,7 +28,7 @@ router.post('/', auth, async (req, res) => {
     const newConstraint = new ConstraintsNObstacles({
       note,
       mission_id,
-      created_by: req.user.id
+      created_by: req.user._id
     });
 
     const constraint = await newConstraint.save();

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { toast } from 'react-toastify';
 
 interface DriverResource {
   _id: string;
@@ -64,10 +65,18 @@ const DriversNResourcesPage = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await api.delete(`/drivers_n_resources/${id}`);
+      await api.delete(`/missions/drivers_n_resources/${id}`);
       setDriversResources(driversResources.filter(dr => dr._id !== id));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting driver/resource:', error);
+      if (error.response?.status === 403) {
+        toast.error('You are not authorized to delete this entry');
+      } else if (error.response?.status === 401) {
+        toast.error('Please login again');
+        navigate('/login');
+      } else {
+        toast.error('Failed to delete entry');
+      }
     }
   };
 

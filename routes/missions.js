@@ -248,11 +248,6 @@ router.delete('/successes/:successId', auth, async (req, res) => {
       return res.status(404).json({ message: 'Success not found' });
     }
 
-    // Verify user is the creator
-    if (success.created_by.toString() !== req.user.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
     await success.deleteOne();
     res.status(204).end();
   } catch (err) {
@@ -326,11 +321,6 @@ router.put('/drivers_n_resources/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Entry not found' });
     }
 
-    // Verify user is the creator
-    if (driverResource.created_by.toString() !== req.user.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
     driverResource.note = note.trim();
     await driverResource.save();
 
@@ -349,12 +339,89 @@ router.delete('/drivers_n_resources/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Entry not found' });
     }
 
-    // Verify user is the creator
-    if (driverResource.created_by.toString() !== req.user.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+    await driverResource.deleteOne();
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Constraints and Obstacles endpoints
+router.route('/:missionId/constraints_n_obstacles')
+  // Get constraints and obstacles for mission
+  .get(auth, async (req, res) => {
+    try {
+      const ConstraintsNObstacles = require('../models/ConstraintsNObstacles');
+      const constraints = await ConstraintsNObstacles.find({ 
+        mission_id: req.params.missionId 
+      })
+        .populate('created_by', 'name')
+        .sort({ created: -1 });
+
+      res.json(constraints);
+    } catch (err) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  })
+  // Create new constraint/obstacle entry
+  .post(auth, async (req, res) => {
+    try {
+      const ConstraintsNObstacles = require('../models/ConstraintsNObstacles');
+      const { note } = req.body;
+
+      if (!note || !note.trim()) {
+        return res.status(400).json({ message: 'Note is required' });
+      }
+
+      const constraint = new ConstraintsNObstacles({
+        note: note.trim(),
+        mission_id: req.params.missionId,
+        created_by: req.user
+      });
+
+      await constraint.save();
+      res.status(201).json(constraint);
+    } catch (err) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+// Update constraint/obstacle entry
+router.put('/constraints_n_obstacles/:id', auth, async (req, res) => {
+  try {
+    const ConstraintsNObstacles = require('../models/ConstraintsNObstacles');
+    const { note } = req.body;
+
+    if (!note || !note.trim()) {
+      return res.status(400).json({ message: 'Note is required' });
     }
 
-    await driverResource.deleteOne();
+    const constraint = await ConstraintsNObstacles.findById(req.params.id);
+
+    if (!constraint) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+
+    constraint.note = note.trim();
+    await constraint.save();
+
+    res.json(constraint);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete constraint/obstacle entry
+router.delete('/constraints_n_obstacles/:id', auth, async (req, res) => {
+  try {
+    const ConstraintsNObstacles = require('../models/ConstraintsNObstacles');
+    const constraint = await ConstraintsNObstacles.findById(req.params.id);
+
+    if (!constraint) {
+      return res.status(404).json({ message: 'Entry not found' });
+    }
+
+    await constraint.deleteOne();
     res.status(204).end();
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
