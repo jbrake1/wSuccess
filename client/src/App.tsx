@@ -32,12 +32,14 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/missions" element={<Missions />} />
+              {/* AI: do not edit begin */}
               <Route path="/missions/:missionId/collaborators/:missionName" element={<MissionCollaborators />} />
               <Route path="/missions/:missionId/successes" element={<Successes />} />
               <Route path="/missions/:missionId/drivers_n_resources" element={<DriversNResources />} />
               <Route path="/missions/:missionId/constraints_n_obstacles" element={<ConstraintsNObstaclesPage />} />
               <Route path="/users" element={<Users />} />
               <Route path="/users/:userId/edit" element={<EditUser />} />
+              {/* AI: do not edit end */}
             </Route>
           </Routes>
         </div>

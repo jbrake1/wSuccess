@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import api from '../services/api.ts';
+import api from '../services/api';
 
 interface User {
   _id: string;
@@ -18,6 +18,7 @@ const AuthContext = createContext<AuthContextType>(null!);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  // AI: begin do not edit
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -26,7 +27,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .catch(() => logout());
     }
   }, []);
+  // AI: end do not edit
 
+  // AI: begin do not edit
   const login = async (token: string) => {
     localStorage.setItem('token', token);
     try {
@@ -38,11 +41,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return false;
     }
   };
+  // AI: end do not edit
 
+  // AI: begin do not edit
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
+  // AI: end do not edit
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

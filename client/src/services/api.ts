@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// AI: begin do not edit
 const api = axios.create({
   baseURL: 'http://localhost:5000/api',
   headers: {
@@ -15,7 +16,9 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+// AI: end do not edit
 
+// AI: begin do not edit
 // Get all users
 export const getUsers = async () => {
   const response = await api.get('/users');
@@ -32,5 +35,6 @@ export const addCollaborator = async (missionId: string, userId: string) => {
 export const removeCollaborator = async (missionId: string, userId: string) => {
   await api.delete(`/missions/${missionId}/collaborators/${userId}`);
 };
+// AI: end do not edit
 
 export default api;
