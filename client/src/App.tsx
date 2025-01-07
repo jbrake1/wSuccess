@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Missions from './pages/Missions';
 import MissionCollaborators from './pages/MissionCollaborators';
 import Successes from './pages/Successes';
+import RelevantFacts from './pages/RelevantFacts';
 import DriversNResources from './pages/DriversNResources';
 import ConstraintsNObstaclesPage from './pages/ConstraintsNObstacles';
 import Users from './pages/Users';
@@ -32,6 +33,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/missions" element={<Missions />} />
+              <Route path="/missions/:missionId/relevant_facts" element={<RelevantFacts />} />
               {/* AI: do not edit begin */}
               <Route path="/missions/:missionId/collaborators/:missionName" element={<MissionCollaborators />} />
               <Route path="/missions/:missionId/successes" element={<Successes />} />

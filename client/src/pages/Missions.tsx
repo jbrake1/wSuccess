@@ -112,6 +112,12 @@ const Missions = () => {
               >
                 View Constraints & Obstacles
               </Link>
+              <Link 
+                to={`/missions/${mission._id}/relevant_facts`}
+                className="relevant-facts-link px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors mx-2"
+              >
+                View Relevant Facts
+              </Link>
             </div>
           </div>
         ))}

@@ -37,4 +37,21 @@ export const removeCollaborator = async (missionId: string, userId: string) => {
 };
 // AI: end do not edit
 
+// Get relevant facts for a mission
+export const getRelevantFacts = async (missionId: string) => {
+  const response = await api.get(`/missions/${missionId}/relevant_facts`);
+  return response.data;
+};
+
+// Create new relevant fact
+export const createRelevantFact = async (missionId: string, note: string) => {
+  const response = await api.post(`/missions/${missionId}/relevant_facts`, { note });
+  return response.data;
+};
+
+// Delete relevant fact
+export const deleteRelevantFact = async (missionId: string, relevantFactId: string) => {
+  await api.delete(`/missions/${missionId}/relevant_facts/${relevantFactId}`);
+};
+
 export default api;
