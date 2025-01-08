@@ -11,6 +11,7 @@ import Missions from './pages/Missions';
 import MissionCollaborators from './pages/MissionCollaborators';
 import Successes from './pages/Successes';
 import RelevantFacts from './pages/RelevantFacts';
+import RelevantAssumptions from './pages/RelevantAssumptions';
 import DriversNResources from './pages/DriversNResources';
 import ConstraintsNObstaclesPage from './pages/ConstraintsNObstacles';
 import Users from './pages/Users';
@@ -34,6 +35,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/missions" element={<Missions />} />
               <Route path="/missions/:missionId/relevant_facts" element={<RelevantFacts />} />
+              <Route path="/missions/:missionId/relevant_assumptions" element={<RelevantAssumptions />} />
               {/* AI: do not edit begin */}
               <Route path="/missions/:missionId/collaborators/:missionName" element={<MissionCollaborators />} />
               <Route path="/missions/:missionId/successes" element={<Successes />} />

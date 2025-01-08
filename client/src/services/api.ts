@@ -54,4 +54,21 @@ export const deleteRelevantFact = async (missionId: string, relevantFactId: stri
   await api.delete(`/missions/${missionId}/relevant_facts/${relevantFactId}`);
 };
 
+// Get relevant assumptions for a mission
+export const getRelevantAssumptions = async (missionId: string) => {
+  const response = await api.get(`/missions/${missionId}/relevant_assumptions`);
+  return response.data;
+};
+
+// Create new relevant assumption
+export const createRelevantAssumption = async (missionId: string, note: string) => {
+  const response = await api.post(`/missions/${missionId}/relevant_assumptions`, { note });
+  return response.data;
+};
+
+// Delete relevant assumption
+export const deleteRelevantAssumption = async (missionId: string, relevantAssumptionId: string) => {
+  await api.delete(`/missions/${missionId}/relevant_assumptions/${relevantAssumptionId}`);
+};
+
 export default api;

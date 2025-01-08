@@ -118,6 +118,12 @@ const Missions = () => {
               >
                 View Relevant Facts
               </Link>
+              <Link 
+                to={`/missions/${mission._id}/relevant_assumptions`}
+                className="relevant-assumptions-link px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors mx-2"
+              >
+                View Relevant Assumptions
+              </Link>
             </div>
           </div>
         ))}
