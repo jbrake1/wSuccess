@@ -124,6 +124,12 @@ const Missions = () => {
               >
                 View Relevant Assumptions
               </Link>
+              <Link 
+                to={`/missions/${mission._id}/course_of_action`}
+                className="course-of-action-link px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600 transition-colors mx-2"
+              >
+                View Course of Action
+              </Link>
             </div>
           </div>
         ))}

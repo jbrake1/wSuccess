@@ -20,6 +20,7 @@ mongoose.connect(process.env.MONGO_URI)
 require('./models/Success');
 require('./models/RelevantFact');
 require('./models/RelevantAssumption');
+require('./models/CourseOfAction');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -29,6 +30,7 @@ const successRoutes = require('./routes/successes');
 const relevantFactRoutes = require('./routes/relevant_facts');
 const relevantAssumptionRoutes = require('./routes/relevant_assumptions');
 const constraintsNObstaclesRoutes = require('./routes/constraints_n_obstacles');
+const courseOfActionRoutes = require('./routes/course_of_action');
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')));
@@ -41,6 +43,7 @@ app.use('/api', successRoutes);
 app.use('/api', relevantFactRoutes);
 app.use('/api', relevantAssumptionRoutes);
 app.use('/api/constraints_n_obstacles', constraintsNObstaclesRoutes);
+app.use('/api', courseOfActionRoutes);
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
