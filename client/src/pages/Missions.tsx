@@ -130,6 +130,12 @@ const Missions = () => {
               >
                 View Course of Action
               </Link>
+              <Link 
+                to={`/missions/${mission._id}/mission_story`}
+                className="mission-story-link px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors mx-2"
+              >
+                View Mission Story
+              </Link>
             </div>
           </div>
         ))}

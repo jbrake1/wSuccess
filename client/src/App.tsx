@@ -15,6 +15,7 @@ import RelevantFacts from './pages/RelevantFacts';
 import RelevantAssumptions from './pages/RelevantAssumptions';
 import DriversNResources from './pages/DriversNResources';
 import ConstraintsNObstaclesPage from './pages/ConstraintsNObstacles';
+import MissionStory from './pages/MissionStory';
 import Users from './pages/Users';
 import EditUser from './pages/EditUser';
 import Navbar from './components/Navbar';
@@ -43,6 +44,7 @@ function App() {
               <Route path="/missions/:missionId/course_of_action" element={<CourseOfAction />} />
               <Route path="/missions/:missionId/drivers_n_resources" element={<DriversNResources />} />
               <Route path="/missions/:missionId/constraints_n_obstacles" element={<ConstraintsNObstaclesPage />} />
+              <Route path="/missions/:missionId/mission_story" element={<MissionStory />} />
               <Route path="/users" element={<Users />} />
               <Route path="/users/:userId/edit" element={<EditUser />} />
               {/* AI: do not edit end */}
