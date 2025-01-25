@@ -1,143 +1,28 @@
-# Project Management Tool
+Prompts for the app ‘Plan Wild Success’
 
-This is a full-stack project management application with user authentication and CRUD operations for various entities.
+I am creating a mission planning application. 
 
-## Project Structure
+users can register and login and logout and create missions
 
-```
-.
-├── client/               # React frontend
-│   ├── public/
-│   ├── src/
-│   │   ├── components/   # Reusable UI components
-│   │   ├── pages/        # Page components
-│   │   ├── services/     # API service layer
-│   │   └── ...           # Other frontend files
-├── middleware/           # Express middleware
-├── models/               # Mongoose models
-├── routes/               # Express routes
-├── test/                 # Selenium test suite
-│   ├── *.test.js         # Test files for each entity
-│   └── test-runner.js    # Test execution script
-├── server.js             # Express server
-└── ...                   # Other configuration files
-```
+create a user table with id, email, name, password(encrypted), created and created_by  create a api in react that has CRUD for the user table
 
-## Testing Approach
+create table called mission with id, userid, name, description, created and created_by
 
-The project uses Selenium for end-to-end testing with the following guidelines:
+Each mission will have mission factors.
 
-1. Tests are organized by entity type (users, missions, etc.)
-2. Each test file contains CRUD operations
-3. Tests run against both frontend and backend
-4. Test data is cleaned up after each test
+There are 6 mission factors:
 
-## AI Interaction Guidelines
+1. success - example: we got the stuff we wanted from the store 
+2. constraint and obstacle - example: car might be out of gas, stolen, gone, broken, card might be blocked, store might be closed, store might not have the things we want, we might get lost, google maps requires data service 
+3. relevant fact - example: we have a car, we have money in our bank, we have a debit card for the bank, we have google maps, we have a data plan
+4. relevant assumption - example: the car has gas, our phone will not break while going to the store, the car works and is here, we have money and the bank will make it work
+5. driver and resource - example: need food from store
+6. course of action - example: check car for gas, check store hours, call store if concerned about no food, drive to store, bring money, buy food at store, drive home
 
-### What AI Should Do:
-- Create and modify test files
-- Identify and report bugs
-- Suggest improvements to test coverage
-- Update documentation
-- Fix minor syntax issues
-- Refactor test code for better maintainability
+if a user creates a mission they are added to the mission participant table the mission participant table has id, missionid, userid, created and created by
 
-### What AI Should NOT Do:
-- Modify core application logic
-- Change database schemas
-- Alter authentication mechanisms
-- Modify production configuration
-- Make changes to the frontend UI
-- Change API contracts without approval
+Anyone who has an email address can create an account create a mission and add factors or participants to a mission. Any of the 6 factors maybe liked by the any of the participants. 
+ create a table called ‘like’ that has id, factorid, userid, and created   
+create robust tests using selenium to create accounts, login, create missions, create factors and participants, as a user like factors and participants and unlike factors and participants
 
-## Running Tests
-
-All commands should be run from the project root directory (/Users/jimmybrake/Documents/wSuccess) unless otherwise specified.
-
-1. Start both frontend and backend servers:
-```bash
-# From project root
-npm start
-
-# Open new terminal tab, navigate to client directory
-cd client
-npm start
-```
-
-2. Run all tests:
-```bash
-# From project root
-npm test
-```
-
-3. Run specific test file:
-```bash
-# From project root
-node test/users.test.js
-```
-
-4. Install dependencies:
-```bash
-# From project root (installs backend dependencies)
-npm install
-
-# From client directory (installs frontend dependencies)
-cd client
-npm install
-```
-
-5. Build frontend:
-```bash
-# From client directory
-cd client
-npm run build
-```
-
-6. Run development server:
-```bash
-# From project root (backend)
-npm run dev
-
-# From client directory (frontend)
-cd client
-npm run dev
-```
-
-## Reporting Issues
-
-When reporting bugs:
-- Include test file and line number
-- Describe expected vs actual behavior
-- Provide relevant error messages
-- Do not attempt to fix the issue unless instructed
-
-## Extra AI Prompts
-
-- after you make a change test retest for properfunctionality
-- document all functionality required at the top of each file
-- at each decision point function of substantial block of code explain its purpose in plain english
-- for each page or API endpoint create a test file and write a test for each function
-- for each test file create a test runner file that runs all tests in the file
-- if a file exists - first read it before editing it - make sure all it's present functionality remains unless you are editing an existing functionality being mindful of all it's existing dependencies
-- if a file does not exist - create it and write the test for it
-- before running any tests insure the servers are running and the database is connected. restart the servers if necessary
-
-As an AI assistant, you are to avoid editing existing functional code unless it is absolutely necessary for the task. Always seek explicit confirmation before making changes to such code.
-
-You are a senior programmer with extensive experience in software development and design. Your work consistently reflects best practices in coding, including well-written, efficient, and thoroughly documented code.
-
-You are expected to respect code annotations that indicate protected sections. Specifically, any code block marked with the following comments must not be edited unless explicitly instructed otherwise:
-
-// AI: begin do not edit
-// (protected code here)
-// AI: end do not edit
-
-These annotations signify critical sections of code that should remain intact unless absolutely necessary for the task. If a modification is required, you must explicitly confirm with the user before proceeding.
-
-You meticulously review the README.md file in the project root to gather context and ensure alignment with project requirements. You always ask clarifying questions about file paths, exact URL structures, and other critical details—never guessing or assuming. You diligently analyze existing documentation, repository content, and related resources to make informed decisions.
-
-You maintain a flawless memory by taking detailed notes, creating actionable checklists, and frequently reviewing and refining both.
-
-For testing purposes, your account is:
-Email: support@dwalliance.com
-Password: 4240!
+make an API for all features and create test scripts to test all the features and keep add new tests

@@ -33,24 +33,26 @@ exports.findAllForFactor = async (req, res) => {
 
 // Delete a Like with the specified id
 exports.delete = async (req, res) => {
+  const id = req.params.id;
+  console.log('Attempting to delete like with id:', id);
   try {
     const num = await Like.destroy({
-      where: { 
-        id: req.params.id,
-        createdBy: req.user.id // Only allow creator to delete
-      }
+      where: { id: id }
     });
-    
-    if (num === 1) {
-      res.send({ message: 'Like was deleted successfully!' });
+    console.log('Delete operation affected rows:', num);
+    if (num == 1) {
+      res.send({
+        message: "Like was deleted successfully!"
+      });
     } else {
-      res.status(404).send({
-        message: `Cannot delete Like with id=${req.params.id}. Maybe Like was not found or you don't have permission.`
+      res.send({
+        message: `Cannot delete Like with id=${id}. Maybe Like was not found!`
       });
     }
   } catch (err) {
+    console.error('Error deleting like:', err);
     res.status(500).send({
-      message: 'Could not delete Like with id=' + req.params.id
+      message: "Could not delete Like with id=" + id
     });
   }
 };

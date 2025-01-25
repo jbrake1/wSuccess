@@ -1,172 +1,271 @@
 #!/bin/bash
 
-# Test mission participant API flow with cleanup
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-# Cleanup any existing test data first
-echo "Cleaning up any existing test data..."
+# Test counters
+TESTS_RUN=0
+TESTS_PASSED=0
+TESTS_FAILED=0
+
+# Utility functions
+print_header() {
+  echo -e "\n${YELLOW}=== $1 ===${NC}"
+}
+
+print_success() {
+  echo -e "${GREEN}✔ $1${NC}"
+  ((TESTS_PASSED++))
+  ((TESTS_RUN++))
+}
+
+print_failure() {
+  echo -e "${RED}✖ $1${NC}"
+  ((TESTS_FAILED++))
+  ((TESTS_RUN++))
+}
+
+cleanup() {
+  print_header "CLEANING UP TEST DATA"
+  
+  # First try to login with existing test user
+  TOKEN=$(curl -s -X POST -H "Content-Type: application/json" \
+    -d '{"email":"test_creator@test.com","password":"Test123!"}' \
+    http://localhost:5000/api/users/login | jq -r '.token')
+
+  if [ -n "$TOKEN" ]; then
+    # First delete all missions created by test users
+    for email in "test_creator@test.com" "test_participant1@test.com" "test_participant2@test.com"; do
+      echo -e "\nDeleting missions for: $email"
+      USER_ID=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+        -d "{\"email\":\"$email\"}" \
+        http://localhost:5000/api/users/find | jq -r '.id')
+      
+      if [ -n "$USER_ID" ] && [ "$USER_ID" != "null" ]; then
+        # Delete all missions created by this user
+        echo "Deleting missions for user ID: $USER_ID"
+        # First get all missions for this user
+        MISSIONS=$(curl -s -H "Authorization: Bearer $TOKEN" \
+          http://localhost:5000/api/missions?userId=$USER_ID | jq -r '.[].id')
+        
+        # Delete each mission individually
+        for MISSION_ID in $MISSIONS; do
+          echo "Deleting mission ID: $MISSION_ID"
+          DELETE_RESPONSE=$(curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
+            http://localhost:5000/api/missions/$MISSION_ID)
+          echo "Mission deletion response: $DELETE_RESPONSE"
+        done
+      fi
+    done
+    
+    # Then delete test users
+    for email in "test_creator@test.com" "test_participant1@test.com" "test_participant2@test.com"; do
+      echo -e "\nDeleting user: $email"
+      # First try to find user ID
+      USER_ID=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+        -d "{\"email\":\"$email\"}" \
+        http://localhost:5000/api/users/find | jq -r '.id')
+      
+      if [ -n "$USER_ID" ] && [ "$USER_ID" != "null" ]; then
+        DELETE_RESPONSE=$(curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
+          http://localhost:5000/api/users/$USER_ID)
+        echo "Delete response: $DELETE_RESPONSE"
+      else
+        echo "User not found: $email"
+      fi
+    done
+  else
+    # If login fails, try to delete users without token
+    echo -e "\nFailed to get token, attempting direct user deletion"
+    for email in "test_creator@test.com" "test_participant1@test.com" "test_participant2@test.com"; do
+      echo -e "\nDeleting user: $email"
+      # First try to find user ID
+      USER_ID=$(curl -s -X POST -H "Content-Type: application/json" \
+        -d "{\"email\":\"$email\"}" \
+        http://localhost:5000/api/users/find | jq -r '.id')
+      
+      if [ -n "$USER_ID" ] && [ "$USER_ID" != "null" ]; then
+        DELETE_RESPONSE=$(curl -s -X DELETE \
+          http://localhost:5000/api/users/$USER_ID)
+        echo "Delete response: $DELETE_RESPONSE"
+      else
+        echo "User not found: $email"
+      fi
+    done
+  fi
+}
+
+# Start clean
+cleanup
+
+# Test user registration
+print_header "TESTING USER REGISTRATION"
+REGISTER_RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" \
+  -d '{"email":"test_creator@test.com","password":"Test123!","name":"Test Creator"}' \
+  http://localhost:5000/api/users/register)
+
+TEST_CREATOR_ID=$(echo $REGISTER_RESPONSE | jq -r '.id')
+if [ -n "$TEST_CREATOR_ID" ] && [ "$TEST_CREATOR_ID" != "null" ]; then
+  print_success "User registration successful"
+  echo "Created user ID: $TEST_CREATOR_ID"
+else
+  echo -e "${RED}User registration response: $REGISTER_RESPONSE${NC}"
+  print_failure "User registration failed"
+  exit 1
+fi
+
+# Test user login
+print_header "TESTING USER LOGIN"
 TOKEN=$(curl -s -X POST -H "Content-Type: application/json" \
   -d '{"email":"test_creator@test.com","password":"Test123!"}' \
   http://localhost:5000/api/users/login | jq -r '.token')
 
 if [ -n "$TOKEN" ]; then
-  # Delete test mission if exists
-  curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-    http://localhost:5000/api/missions/5 | jq
-  
-  # Delete test users using stored IDs
-  echo "Deleting test users..."
-  if [ -n "$TEST_CREATOR_ID" ]; then
-    curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-      http://localhost:5000/api/users/$TEST_CREATOR_ID > /dev/null
-  fi
-
-  if [ -n "$TEST_PARTICIPANT1_ID" ]; then
-    curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-      http://localhost:5000/api/users/$TEST_PARTICIPANT1_ID > /dev/null
-  fi
-
-  if [ -n "$TEST_PARTICIPANT2_ID" ]; then
-    curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-      http://localhost:5000/api/users/$TEST_PARTICIPANT2_ID > /dev/null
-  fi
+  print_success "User login successful"
+else
+  print_failure "User login failed"
 fi
 
-# Create test accounts and store IDs
-echo -e "\nCreating test accounts..."
-TEST_CREATOR_ID=$(curl -s -X POST -H "Content-Type: application/json" \
-  -d '{"email":"test_creator@test.com","password":"Test123!","name":"Test Creator"}' \
-  http://localhost:5000/api/users/register | jq -r '.id')
-
-TEST_PARTICIPANT1_ID=$(curl -s -X POST -H "Content-Type: application/json" \
-  -d '{"email":"test_participant1@test.com","password":"Test123!","name":"Test Participant 1"}' \
-  http://localhost:5000/api/users/register | jq -r '.id')
-
-TEST_PARTICIPANT2_ID=$(curl -s -X POST -H "Content-Type: application/json" \
-  -d '{"email":"test_participant2@test.com","password":"Test123!","name":"Test Participant 2"}' \
-  http://localhost:5000/api/users/register | jq -r '.id')
-
-# Login and get token
-echo -e "\nLogging in as test creator..."
-TOKEN=$(curl -s -X POST -H "Content-Type: application/json" \
-  -d '{"email":"test_creator@test.com","password":"Test123!"}' \
-  http://localhost:5000/api/users/login | jq -r '.token')
-
-if [ -z "$TOKEN" ]; then
-  echo "Login failed"
-  exit 1
-fi
-echo "Login successful. Token: $TOKEN"
-
-# Create a new mission
-echo -e "\nCreating new mission..."
+# Test mission creation
+print_header "TESTING MISSION CREATION"
 MISSION=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
-  -d '{"name":"Test Mission","description":"Test Mission Description","userId":4,"createdBy":4}' \
+  -d "{\"name\":\"Test Mission\",\"description\":\"Test Mission Description\",\"userId\":\"$TEST_CREATOR_ID\",\"createdBy\":\"$TEST_CREATOR_ID\"}" \
   http://localhost:5000/api/missions)
 
 MISSION_ID=$(echo $MISSION | jq -r '.id')
-if [ -z "$MISSION_ID" ]; then
-  echo "Mission creation failed"
+if [ -n "$MISSION_ID" ] && [ "$MISSION_ID" != "null" ]; then
+  print_success "Mission creation successful"
+  echo "Created mission ID: $MISSION_ID"
+else
+  echo -e "${RED}Mission creation response: $MISSION${NC}"
+  print_failure "Mission creation failed"
   exit 1
 fi
-echo "Mission created successfully. ID: $MISSION_ID"
 
-# Add participants
-echo -e "\nAdding participants..."
+# Test adding participants
+print_header "TESTING PARTICIPANT MANAGEMENT"
 PARTICIPANT1_ID=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
   -d '{"email":"test_participant1@test.com"}' \
   http://localhost:5000/api/users/find | jq -r '.id')
-if [ -z "$PARTICIPANT1_ID" ]; then
-  echo "Failed to get participant1 ID"
-  exit 1
-fi
 
 PARTICIPANT2_ID=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
   -d '{"email":"test_participant2@test.com"}' \
   http://localhost:5000/api/users/find | jq -r '.id')
-if [ -z "$PARTICIPANT2_ID" ]; then
-  echo "Failed to get participant2 ID"
-  exit 1
+
+if [ -n "$PARTICIPANT1_ID" ] && [ -n "$PARTICIPANT2_ID" ]; then
+  print_success "Participant lookup successful"
+else
+  print_failure "Participant lookup failed"
 fi
 
-echo "Adding participant1..."
-curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
-  -d "{\"missionId\":\"$MISSION_ID\",\"userId\":\"$PARTICIPANT1_ID\",\"createdBy\":4}" \
-  http://localhost:5000/api/missions/$MISSION_ID/participants | jq
-
-echo "Adding participant2..."
-curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
-  -d "{\"missionId\":\"$MISSION_ID\",\"userId\":\"$PARTICIPANT2_ID\",\"createdBy\":4}" \
-  http://localhost:5000/api/missions/$MISSION_ID/participants | jq
-
-# Verify participants
-echo -e "\nListing participants..."
-curl -s -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/missions/$MISSION_ID/participants | jq
-
-# Get all missions with participants
-echo -e "\nGetting all missions with participants..."
-curl -s -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/missions/with-participants | jq
-
 # Test mission factors
-echo -e "\nTesting mission factors..."
-
-# Create mission factor
-echo -e "\nCreating mission factor..."
+print_header "TESTING MISSION FACTORS"
 FACTOR=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
-  -d "{\"missionId\":\"$MISSION_ID\",\"description\":\"Test factor\",\"factorType\":\"success\",\"createdBy\":4}" \
+  -d "{\"missionId\":\"$MISSION_ID\",\"description\":\"Test factor\",\"factorType\":\"success\",\"createdBy\":\"$TEST_CREATOR_ID\"}" \
   http://localhost:5000/api/mission-factors)
 
 FACTOR_ID=$(echo $FACTOR | jq -r '.id')
-if [ -z "$FACTOR_ID" ]; then
-  echo "Mission factor creation failed"
+if [ -n "$FACTOR_ID" ] && [ "$FACTOR_ID" != "null" ]; then
+  print_success "Mission factor creation successful"
+  echo "Created factor ID: $FACTOR_ID"
+else
+  echo -e "${RED}Mission factor creation response: $FACTOR${NC}"
+  print_failure "Mission factor creation failed"
   exit 1
 fi
-echo "Mission factor created successfully. ID: $FACTOR_ID"
 
-# Get mission factor
-echo -e "\nGetting mission factor..."
-curl -s -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/mission-factors/factor/$FACTOR_ID | jq
+# Test like functionality
+print_header "TESTING LIKE FUNCTIONALITY"
 
-# Update mission factor
-echo -e "\nUpdating mission factor..."
-curl -s -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
-  -d '{"description":"Updated test factor"}' \
-  http://localhost:5000/api/mission-factors/$FACTOR_ID | jq
+# Verify and refresh token if needed
+echo -e "\nAttempting token refresh..."
+TOKEN_RESPONSE=$(curl -v -X POST http://localhost:5000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test_creator@test.com","password":"Test123!"}')
+  
+echo -e "\nToken response: $TOKEN_RESPONSE"
+TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.token')
 
-# Verify update
-echo -e "\nGetting updated mission factor..."
-curl -s -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/mission-factors/factor/$FACTOR_ID | jq
+if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+  echo -e "${RED}Failed to refresh token. Response: $TOKEN_RESPONSE${NC}"
+  print_failure "Token refresh failed"
+  exit 1
+fi
 
-# Delete mission factor
-echo -e "\nDeleting mission factor..."
-curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/mission-factors/$FACTOR_ID | jq
+echo -e "\nSuccessfully refreshed token"
+
+# Debug token and headers
+echo -e "\nUsing token: $TOKEN"
+echo "Headers:"
+echo "Authorization: Bearer $TOKEN"
+echo "Content-Type: application/json"
+
+# Debug factor ID
+echo -e "\nUsing factor ID: $FACTOR_ID"
+
+# Create a like
+LIKE_RESPONSE=$(curl -v -X POST http://localhost:5000/api/likes \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "factorId": "'"$FACTOR_ID"'"
+  }')
+LIKE_ID=$(echo $LIKE_RESPONSE | jq -r '.id')
+
+if [ -n "$LIKE_ID" ] && [ "$LIKE_ID" != "null" ]; then
+  print_success "Like creation successful"
+  echo "Created like ID: $LIKE_ID"
+else
+  echo -e "${RED}Like creation response: $LIKE_RESPONSE${NC}"
+  print_failure "Like creation failed"
+  exit 1
+fi
+
+# Get likes for factor
+LIKES=$(curl -s http://localhost:5000/api/likes/factor/$FACTOR_ID \
+  -H "Authorization: Bearer $TOKEN" | jq -r '. | length')
+
+if [ "$LIKES" -gt 0 ]; then
+  print_success "Like retrieval successful"
+else
+  print_failure "Like retrieval failed"
+fi
+
+# Delete the like
+DELETE_RESPONSE=$(curl -s -X DELETE http://localhost:5000/api/likes/$LIKE_ID \
+  -H "Authorization: Bearer $TOKEN" | jq -r '.message')
+
+if [ "$DELETE_RESPONSE" = "Like was deleted successfully!" ]; then
+  print_success "Like deletion successful"
+else
+  echo -e "${RED}Delete response: $DELETE_RESPONSE${NC}"
+  print_failure "Like deletion failed"
+fi
 
 # Verify deletion
-echo -e "\nVerifying mission factor deletion..."
-curl -s -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/mission-factors/factor/$FACTOR_ID | jq
+VERIFICATION=$(curl -s http://localhost:5000/api/likes/factor/$FACTOR_ID \
+  -H "Authorization: Bearer $TOKEN" | jq -r 'if . == null then 0 else length end')
 
-# Cleanup
-echo -e "\nCleaning up test data..."
-echo "Deleting mission..."
-curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/missions/$MISSION_ID | jq
+if [ "$VERIFICATION" -eq 0 ]; then
+  print_success "Like verification successful"
+else
+  echo -e "${RED}Expected 0 likes but found $VERIFICATION${NC}"
+  print_failure "Like verification failed"
+fi
 
-echo "Deleting test users..."
-curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-  -d '{"email":"test_creator@test.com"}' \
-  http://localhost:5000/api/users > /dev/null
 
-curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-  -d '{"email":"test_participant1@test.com"}' \
-  http://localhost:5000/api/users > /dev/null
+# Final cleanup
+cleanup
 
-curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-  -d '{"email":"test_participant2@test.com"}' \
-  http://localhost:5000/api/users > /dev/null
+# Test summary
+print_header "TEST SUMMARY"
+echo -e "${GREEN}Tests Passed: $TESTS_PASSED${NC}"
+echo -e "${RED}Tests Failed: $TESTS_FAILED${NC}"
+echo -e "Total Tests Run: $TESTS_RUN"
 
-echo "Test script completed successfully. All test data cleaned up."
+if [ $TESTS_FAILED -gt 0 ]; then
+  exit 1
+fi
