@@ -39,21 +39,36 @@ cleanup() {
   if [ -n "$TOKEN" ]; then
     # First delete all missions created by test users
     for email in "test_creator@test.com" "test_participant1@test.com" "test_participant2@test.com"; do
-      echo -e "\nDeleting missions for: $email"
+      echo -e "\nCleaning up data for: $email"
+      
+      # Find user ID
       USER_ID=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
         -d "{\"email\":\"$email\"}" \
         http://localhost:5000/api/users/find | jq -r '.id')
       
       if [ -n "$USER_ID" ] && [ "$USER_ID" != "null" ]; then
-        # Delete all missions created by this user
-        echo "Deleting missions for user ID: $USER_ID"
-        # First get all missions for this user
+        # Get all missions for this user
         MISSIONS=$(curl -s -H "Authorization: Bearer $TOKEN" \
           http://localhost:5000/api/missions?userId=$USER_ID | jq -r '.[].id')
         
-        # Delete each mission individually
+        # Delete each mission and its dependencies
         for MISSION_ID in $MISSIONS; do
-          echo "Deleting mission ID: $MISSION_ID"
+          echo "Cleaning up mission ID: $MISSION_ID"
+          
+          # Delete mission factors
+          FACTORS=$(curl -s -H "Authorization: Bearer $TOKEN" \
+            http://localhost:5000/api/mission-factors/mission/$MISSION_ID | jq -r '.[].id')
+          for FACTOR_ID in $FACTORS; do
+            echo "Deleting factor ID: $FACTOR_ID"
+            curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
+              http://localhost:5000/api/mission-factors/$FACTOR_ID > /dev/null
+          done
+          
+          # Delete mission participants
+          curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
+            http://localhost:5000/api/mission-participants/mission/$MISSION_ID > /dev/null
+            
+          # Finally delete the mission
           DELETE_RESPONSE=$(curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
             http://localhost:5000/api/missions/$MISSION_ID)
           echo "Mission deletion response: $DELETE_RESPONSE"

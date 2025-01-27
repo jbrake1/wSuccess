@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mission Planner API Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .form-container { margin-bottom: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+    .form-container h2 { margin-top: 0; }
+    input, textarea, button { display: block; width: 100%; margin-bottom: 10px; padding: 8px; }
+    .response { background: #f5f5f5; padding: 15px; margin-top: 20px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Mission Planner API Demo</h1>
+
+  <!-- Auth Section -->
+  <div class="form-container">
+    <h2>Authentication</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Mission Section -->
+  <div class="form-container" id="missionSection" style="display: none;">
+    <h2>My Missions</h2>
+    <div id="missionList" class="mission-list"></div>
+    
+    <h2>Create New Mission</h2>
+    <input type="text" id="missionName" placeholder="Mission Name">
+    <textarea id="missionDescription" placeholder="Mission Description"></textarea>
+    <button onclick="createMission()">Create Mission</button>
+  </div>
+
+  <!-- Factor Section -->
+  <div class="form-container" id="factorSection" style="display: none;">
+    <div id="missionDetails" class="mission-details">
+      <h2>Selected Mission</h2>
+      <h3 id="selectedMissionName"></h3>
+      <p id="selectedMissionDescription"></p>
+      <small id="selectedMissionDate"></small>
+    </div>
+
+    <div id="missionFactors">
+      <h2>Mission Factors</h2>
+      <div id="factorsByType"></div>
+    </div>
+    
+    <h2>Create New Factor</h2>
+      <select id="factorType">
+        <option value="success">Success Factor</option>
+        <option value="driver">Driver/Resource</option>
+        <option value="constraint">Constraint/Obstacle</option>
+        <option value="relevant_fact">Relevant Fact</option>
+        <option value="relevant_assumption">Relevant Assumption</option>
+        <option value="course_of_action">Course of Action</option>
+      </select>
+    <textarea id="factorDescription" placeholder="Factor Description"></textarea>
+    <div id="factorExamples" class="examples"></div>
+    <button onclick="createFactor()">Create Factor</button>
+  </div>
+
+  <!-- Response Display -->
+  <div class="response">
+    <h3>API Response</h3>
+    <pre id="apiResponse"></pre>
+  </div>
+
+  <script>
+    let token = localStorage.getItem('missionPlannerToken') || '';
+    let userId = localStorage.getItem('userId') || '';
+    let missionId = localStorage.getItem('missionId') || '';
+    const apiBaseUrl = 'http://localhost:5000/api';
+    const factorExamples = {
+      success: [
+        "Achieve a 20% increase in brand awareness within three months.",
+        "Successfully onboard 100 users within the first month."
+      ],
+      driver: [
+        "Budget allocation of $10,000 for marketing.",
+        "Team of five engineers with expertise in backend development.",
+        "Access to a pre-existing customer email database."
+      ],
+      constraint: [
+        "Strict regulatory compliance for data privacy (e.g., GDPR).",
+        "Limited workforce availability during holidays.",
+        "Technical limitations of legacy systems."
+      ],
+      relevant_fact: [
+        "The target audience prefers mobile-first applications.",
+        "Historical sales data shows a 15% decrease in demand during Q4.",
+        "Our main competitor launched a similar product last quarter."
+      ],
+      relevant_assumption: [
+        "Assuming user engagement will increase by 10% with improved UX design.",
+        "Assuming team members will complete training before the project start date.",
+        "Assuming the market will grow by 5% annually."
+      ],
+      course_of_action: [
+        "Develop a social media campaign targeting millennials within the first week.",
+        "Deploy a beta version of the app to a test group for feedback before the final launch.",
+        "Conduct user interviews to validate product-market fit."
+      ]
+    };
+
+    // Update factor examples when type changes
+    document.getElementById('factorType')?.addEventListener('change', (e) => {
+      const examples = factorExamples[e.target.value];
+      const examplesHtml = examples.map(ex => `<div class="example">${ex}</div>`).join('');
+      document.getElementById('factorExamples').innerHTML = `
+        <h4>Examples:</h4>
+        ${examplesHtml}
+      `;
+    });
+
+    // Update UI based on auth state
+    async function updateUI() {
+      const missionSection = document.getElementById('missionSection');
+      const factorSection = document.getElementById('factorSection');
+      missionSection.style.display = token ? 'block' : 'none';
+      factorSection.style.display = missionId ? 'block' : 'none';
+      
+      // Trigger factor type change to show examples
+      if (factorSection.style.display === 'block') {
+        document.getElementById('factorType').dispatchEvent(new Event('change'));
+      }
+
+      // Load missions if authenticated
+      if (token) {
+        await loadMissions();
+      }
+    }
+
+    // Load and display user's missions
+    async function loadMissions() {
+      try {
+        const response = await fetch(`${apiBaseUrl}/missions`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const missions = await response.json();
+          const missionList = document.getElementById('missionList');
+          missionList.innerHTML = missions.map(mission => `
+            <div class="mission-item" onclick="selectMission('${mission.id}')">
+              <h3>${mission.name}</h3>
+              <p>${mission.description}</p>
+              <small>Created: ${new Date(mission.created).toLocaleString()}</small>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Failed to load missions:', error);
+      }
+    }
+
+    // Select a mission to view its factors
+    async function selectMission(id) {
+      console.log('Selecting mission with ID:', id);
+      missionId = id;
+      localStorage.setItem('missionId', id);
+      
+      try {
+        // First get mission details
+        console.log('Fetching mission details...');
+        const missionResponse = await fetch(`${apiBaseUrl}/missions/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!missionResponse.ok) {
+          throw new Error(`Failed to fetch mission: ${missionResponse.status}`);
+        }
+
+        const mission = await missionResponse.json();
+        console.log('Mission details:', mission);
+        
+        // Update mission details display
+        document.getElementById('selectedMissionName').textContent = mission.name;
+        document.getElementById('selectedMissionDescription').textContent = mission.description;
+        document.getElementById('selectedMissionDate').textContent = `Created: ${new Date(mission.created).toLocaleString()}`;
+
+        // Then get mission factors
+        console.log('Fetching mission factors...');
+        const factorsResponse = await fetch(`${apiBaseUrl}/mission-factors/mission/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!factorsResponse.ok) {
+          throw new Error(`Failed to fetch factors: ${factorsResponse.status}`);
+        }
+
+        const factors = await factorsResponse.json();
+        console.log('Mission factors:', factors);
+        
+        // Display factors below mission details
+        displayFactorsByType(factors);
+        
+      } catch (error) {
+        console.error('Error loading mission details:', error);
+        document.getElementById('apiResponse').textContent = `Error: ${error.message}`;
+      }
+      
+      updateUI();
+    }
+
+    // Display factors grouped by type
+    function displayFactorsByType(factors) {
+      // Define the order and display names for factor types
+      const factorTypeOrder = [
+        'success', 'driver', 'constraint', 
+        'relevant_fact', 'relevant_assumption', 'course_of_action'
+      ];
+      const factorTypeNames = {
+        success: 'Success Factors',
+        driver: 'Drivers/Resources',
+        constraint: 'Constraints/Obstacles',
+        relevant_fact: 'Relevant Facts',
+        relevant_assumption: 'Relevant Assumptions',
+        course_of_action: 'Courses of Action'
+      };
+
+      // Group factors by type
+      const grouped = factors.reduce((acc, factor) => {
+        if (!acc[factor.factorType]) {
+          acc[factor.factorType] = [];
+        }
+        acc[factor.factorType].push(factor);
+        return acc;
+      }, {});
+
+      const factorsContainer = document.getElementById('factorsByType');
+      
+      // Create factor groups in defined order
+      factorsContainer.innerHTML = factorTypeOrder
+        .filter(type => grouped[type] && grouped[type].length > 0)
+        .map(type => `
+          <div class="factor-group">
+            <h3>${factorTypeNames[type]}</h3>
+            ${grouped[type].map(factor => `
+              <div class="factor-item">
+                <p>${factor.description}</p>
+                <small>Added: ${new Date(factor.created).toLocaleString()}</small>
+              </div>
+            `).join('')}
+          </div>
+        `).join('');
+    }
+
+    // Handle API responses
+    function handleResponse(response, action) {
+      const responseElement = document.getElementById('apiResponse');
+      if (response.ok) {
+        return response.json().then(data => {
+          responseElement.textContent = JSON.stringify(data, null, 2);
+          if (action === 'login' && data.token) {
+            token = data.token;
+            localStorage.setItem('missionPlannerToken', token);
+            updateUI();
+          }
+          return data;
+        });
+      } else {
+        return response.json().then(err => {
+          responseElement.textContent = `Error: ${JSON.stringify(err, null, 2)}`;
+          throw err;
+        });
+      }
+    }
+
+    // Register new user
+    async function register() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const response = await fetch(`${apiBaseUrl}/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: email, password })
+      });
+
+      const data = await handleResponse(response, 'register');
+      if (data.id) {
+        userId = data.id;
+        localStorage.setItem('userId', userId);
+      }
+    }
+
+    // Login existing user
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const response = await fetch(`${apiBaseUrl}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      await handleResponse(response, 'login');
+    }
+
+    // Create new mission
+    async function createMission() {
+      const name = document.getElementById('missionName').value;
+      const description = document.getElementById('missionDescription').value;
+
+      const response = await fetch(`${apiBaseUrl}/missions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name,
+          description,
+          userId: userId,
+          createdBy: userId
+        })
+      });
+
+      const data = await handleResponse(response, 'mission');
+      if (data.id) {
+        missionId = data.id;
+        localStorage.setItem('missionId', missionId);
+        await loadMissions(); // Refresh mission list
+        updateUI();
+      }
+    }
+
+    // Create new factor
+    async function createFactor() {
+      const description = document.getElementById('factorDescription').value;
+      const factorType = document.getElementById('factorType').value;
+
+      try {
+        const response = await fetch(`${apiBaseUrl}/mission-factors`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            missionId,
+            description,
+            factorType,
+            createdBy: userId
+          })
+        });
+
+        const data = await handleResponse(response, 'factor');
+        if (data.id) {
+          console.log('Factor created successfully:', data);
+          // Clear input and reload factors
+          document.getElementById('factorDescription').value = '';
+          
+          // Force reload factors
+          const factorsResponse = await fetch(`${apiBaseUrl}/mission-factors/mission/${missionId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (factorsResponse.ok) {
+            const factors = await factorsResponse.json();
+            console.log('Reloaded factors:', factors);
+            displayFactorsByType(factors);
+          } else {
+            console.error('Failed to reload factors:', await factorsResponse.text());
+          }
+        }
+      } catch (error) {
+        console.error('Error creating factor:', error);
+      }
+    }
+
+    // Initialize UI
+    updateUI();
+  </script>
+  <style>
+    .examples {
+      background: #f8f9fa;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .example {
+      padding: 5px;
+      margin: 5px 0;
+      font-style: italic;
+      color: #666;
+    }
+    select {
+      margin-bottom: 15px;
+      padding: 8px;
+      width: 100%;
+    }
+    .mission-list {
+      margin-bottom: 20px;
+    }
+    .mission-item {
+      padding: 15px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .mission-item:hover {
+      background-color: #f8f9fa;
+    }
+    .mission-item h3 {
+      margin: 0 0 5px 0;
+    }
+    .mission-item p {
+      margin: 0 0 5px 0;
+      color: #666;
+    }
+    .mission-item small {
+      color: #999;
+    }
+    .mission-details {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    .mission-details h3 {
+      margin: 10px 0 5px 0;
+    }
+    .mission-details p {
+      margin: 0 0 5px 0;
+      color: #666;
+    }
+    .mission-details small {
+      color: #999;
+    }
+    .factor-group {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    .factor-item {
+      margin: 10px 0;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #eee;
+    }
+    .factor-item p {
+      margin: 0 0 5px 0;
+    }
+    .factor-item small {
+      color: #999;
+    }
+  </style>
+</body>
+</html>
