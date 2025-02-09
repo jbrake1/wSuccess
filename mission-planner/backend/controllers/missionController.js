@@ -111,10 +111,24 @@ exports.create = async (req, res) => {
   }
 };
 
-// Retrieve all Missions
+// Retrieve all Missions for authenticated user
 exports.findAll = async (req, res) => {
   try {
-    const missions = await Mission.findAll();
+    const userId = req.user.id;
+    
+    // Find missions where user is either owner or participant
+    const missions = await Mission.findAll({
+      where: { 
+        userId: userId 
+      },
+      include: [{
+        model: db.MissionParticipant,
+        as: 'participants',
+        where: { userId: userId },
+        required: false
+      }]
+    });
+    
     res.send(missions);
   } catch (err) {
     res.status(500).send({

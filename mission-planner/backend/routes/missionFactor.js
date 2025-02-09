@@ -14,6 +14,9 @@ router.get('/factor/:id', missionFactorController.findOne);
 // Update a Mission Factor with id
 router.put('/:id', missionFactorController.update);
 
+// Update behind field of a Mission Factor
+router.patch('/:id/behind', missionFactorController.updateBehind);
+
 // Delete a Mission Factor with id
 router.delete('/:id', missionFactorController.delete);
 

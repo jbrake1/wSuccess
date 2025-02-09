@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const missionController = require('../controllers/missionController');
+const authMiddleware = require('../middleware/authMiddleware');
+
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
 // Create a new Mission
 router.post('/', missionController.create);

@@ -110,6 +110,53 @@ exports.update = async (req, res) => {
   }
 };
 
+exports.updateBehind = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { behind, userId } = req.body;
+
+    // Validate behind is a number
+    if (typeof behind !== 'number') {
+      return res.status(400).send({
+        message: "Behind must be an integer"
+      });
+    }
+
+    // Find the factor
+    const factor = await db.MissionFactor.findByPk(id);
+    if (!factor) {
+      return res.status(404).send({
+        message: `Mission Factor with id=${id} not found`
+      });
+    }
+
+    // Validate user is a mission participant
+    const isParticipant = await db.MissionParticipant.findOne({
+      where: {
+        missionId: factor.missionId,
+        userId: userId
+      }
+    });
+
+    if (!isParticipant) {
+      return res.status(403).send({
+        message: "Only mission participants can update factor order"
+      });
+    }
+
+    // Update the behind field
+    await factor.update({ behind });
+
+    res.send({
+      message: "Mission Factor order was updated successfully."
+    });
+  } catch (err) {
+    res.status(500).send({
+      message: err.message || "Error updating Mission Factor position"
+    });
+  }
+};
+
 exports.delete = async (req, res) => {
   const id = req.params.id;
   try {

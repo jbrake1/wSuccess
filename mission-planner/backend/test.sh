@@ -192,6 +192,61 @@ else
   exit 1
 fi
 
+# Test position update
+print_header "TESTING FACTOR POSITION UPDATE"
+
+# Create two more factors for position testing
+FACTOR2=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+  -d "{\"missionId\":\"$MISSION_ID\",\"description\":\"Test factor 2\",\"factorType\":\"constraint\",\"createdBy\":\"$TEST_CREATOR_ID\"}" \
+  http://localhost:5000/api/mission-factors)
+
+FACTOR2_ID=$(echo $FACTOR2 | jq -r '.id')
+
+FACTOR3=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+  -d "{\"missionId\":\"$MISSION_ID\",\"description\":\"Test factor 3\",\"factorType\":\"driver\",\"createdBy\":\"$TEST_CREATOR_ID\"}" \
+  http://localhost:5000/api/mission-factors)
+
+FACTOR3_ID=$(echo $FACTOR3 | jq -r '.id')
+
+# Update positions
+POSITION_UPDATE1=$(curl -s -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+  -d "{\"position\":2,\"userId\":\"$TEST_CREATOR_ID\"}" \
+  http://localhost:5000/api/mission-factors/$FACTOR_ID/position)
+
+POSITION_UPDATE2=$(curl -s -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+  -d "{\"position\":1,\"userId\":\"$TEST_CREATOR_ID\"}" \
+  http://localhost:5000/api/mission-factors/$FACTOR2_ID/position)
+
+POSITION_UPDATE3=$(curl -s -X PATCH -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+  -d "{\"position\":3,\"userId\":\"$TEST_CREATOR_ID\"}" \
+  http://localhost:5000/api/mission-factors/$FACTOR3_ID/position)
+
+# Verify positions by getting all factors
+FACTORS_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:5000/api/mission-factors/mission/$MISSION_ID)
+
+# Check if factors were retrieved and have correct positions
+FACTOR2_POSITION=$(echo $FACTORS_RESPONSE | jq -r ".[] | select(.id == $FACTOR2_ID) | .position")
+if [ "$FACTOR2_POSITION" = "1" ]; then
+  print_success "Factor 2 position update successful"
+else
+  print_failure "Factor 2 position update failed"
+fi
+
+FACTOR1_POSITION=$(echo $FACTORS_RESPONSE | jq -r ".[] | select(.id == $FACTOR_ID) | .position")
+if [ "$FACTOR1_POSITION" = "2" ]; then
+  print_success "Factor 1 position update successful"
+else
+  print_failure "Factor 1 position update failed"
+fi
+
+FACTOR3_POSITION=$(echo $FACTORS_RESPONSE | jq -r ".[] | select(.id == $FACTOR3_ID) | .position")
+if [ "$FACTOR3_POSITION" = "3" ]; then
+  print_success "Factor 3 position update successful"
+else
+  print_failure "Factor 3 position update failed"
+fi
+
 # Test like functionality
 print_header "TESTING LIKE FUNCTIONALITY"
 

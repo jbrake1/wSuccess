@@ -210,8 +210,78 @@
       updateUI();
     }
 
+    // Toggle like for a factor
+    async function toggleLike(factorId, likeIcon) {
+      try {
+        // First check if factor is already liked
+        const likesResponse = await fetch(`${apiBaseUrl}/likes/factor/${factorId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!likesResponse.ok) {
+          throw new Error('Failed to check likes');
+        }
+        
+        const likes = await likesResponse.json();
+        const existingLike = likes.find(like => like.createdBy === parseInt(userId));
+        
+        if (existingLike) {
+          // Unlike: delete the existing like
+          const deleteResponse = await fetch(`${apiBaseUrl}/likes/${existingLike.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (deleteResponse.ok) {
+            likeIcon.textContent = '♡';
+            likeIcon.classList.remove('liked');
+          }
+        } else {
+          // Like: create new like
+          const createResponse = await fetch(`${apiBaseUrl}/likes`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ factorId })
+          });
+          
+          if (createResponse.ok) {
+            likeIcon.textContent = '♥';
+            likeIcon.classList.add('liked');
+          }
+        }
+      } catch (error) {
+        console.error('Error toggling like:', error);
+        document.getElementById('apiResponse').textContent = `Error: ${error.message}`;
+      }
+    }
+
     // Display factors grouped by type
-    function displayFactorsByType(factors) {
+    async function displayFactorsByType(factors) {
+      // Get likes for all factors first
+      const factorLikes = {};
+      for (const factor of factors) {
+        try {
+          const likesResponse = await fetch(`${apiBaseUrl}/likes/factor/${factor.id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (likesResponse.ok) {
+            const likes = await likesResponse.json();
+            factorLikes[factor.id] = likes.some(like => like.createdBy === parseInt(userId));
+          }
+        } catch (error) {
+          console.error(`Error fetching likes for factor ${factor.id}:`, error);
+        }
+      }
+
       // Define the order and display names for factor types
       const factorTypeOrder = [
         'success', 'driver', 'constraint', 
@@ -246,6 +316,9 @@
             ${grouped[type].map(factor => `
               <div class="factor-item">
                 <p>${factor.description}</p>
+                <span class="like-icon ${factorLikes[factor.id] ? 'liked' : ''}" onclick="toggleLike(${factor.id}, this)">
+                  ${factorLikes[factor.id] ? '♥' : '♡'}
+                </span>
                 <small>Added: ${new Date(factor.created).toLocaleString()}</small>
               </div>
             `).join('')}
@@ -453,12 +526,33 @@
       background: white;
       border-radius: 4px;
       border: 1px solid #eee;
+      position: relative;
     }
     .factor-item p {
       margin: 0 0 5px 0;
     }
     .factor-item small {
       color: #999;
+    }
+    
+    .like-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #ccc;
+      cursor: pointer;
+      padding: 5px;
+      transition: color 0.3s ease;
+      font-size: 20px;
+    }
+    
+    .like-icon:hover {
+      color: #ff4757;
+    }
+
+    .like-icon.liked {
+      color: #ff4757;
     }
   </style>
 </body>
